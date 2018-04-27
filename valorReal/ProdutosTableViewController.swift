@@ -7,10 +7,12 @@
 //
 
 import UIKit
+import CoreData
 
 class ProdutosTableViewController: UITableViewController {
 
     var label = UILabel(frame: CGRect(x: 0, y: 0, width: 200, height: 22))
+    var fetchedResultController: NSFetchedResultsController<Produtos>!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -20,12 +22,27 @@ class ProdutosTableViewController: UITableViewController {
         label.text = "Sua lista está vazia"
         label.textAlignment = .center
         label.textColor = .black
+        
+        loadProdutos()
 
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
 
         // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
+    }
+    
+    func loadProdutos(){
+        let fetchRequest: NSFetchRequest<Produtos> = Produtos.fetchRequest()
+        let sortDescriptor = NSSortDescriptor(key: "nome", ascending: true)
+        fetchRequest.sortDescriptors = [sortDescriptor]
+        fetchedResultController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
+        fetchedResultController.delegate = self
+        do {
+            try fetchedResultController.performFetch()
+        } catch {
+            print(error.localizedDescription)
+        }
     }
 
     override func didReceiveMemoryWarning() {
@@ -42,19 +59,32 @@ class ProdutosTableViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        tableView.backgroundView = label
-        return 0
+        if let count = fetchedResultController.fetchedObjects?.count{
+            tableView.backgroundView = (count == 0) ? label : nil
+            return count
+        }else{
+            tableView.backgroundView = label
+            return 0
+        }
     }
 
-    /*
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath) as! ProdutoTableViewCell
+        
+        let produto = fetchedResultController.object(at: indexPath)
+        //cell.nomeProduto.text = "\(produto.nome ?? "")"
+        //cell.valorProduto.text = "\(produto.valor)"
+        if let image = produto.image as? UIImage{
+            cell.imgProduto.image = image
+        }else{
+            cell.imgProduto.image = nil
+        }
+        
 
         // Configure the cell...
 
         return cell
     }
-    */
 
     /*
     // Override to support conditional editing of the table view.
@@ -101,4 +131,10 @@ class ProdutosTableViewController: UITableViewController {
     }
     */
 
+}
+// MARK: - NSFetchedResultsControllerDelegate
+extension ProdutosTableViewController: NSFetchedResultsControllerDelegate {
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.reloadData()
+    }
 }

@@ -15,16 +15,43 @@ class ItemRegisterViewController: UIViewController {
     @IBOutlet weak var ufProduto: UITextField!
     @IBOutlet weak var valorProduto: UITextField!
     @IBOutlet weak var swCartao: UISwitch!
+    @IBOutlet weak var btnSalvar: UIButton!
     
     // MARK: - Properties
-    //var movie: Movie!
+    var produto: Produtos!
     var smallImage: UIImage!
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        if produto != nil{
+            nomeProduto.text = produto.nome
+            valorProduto.text = String(produto.valor)
+            swCartao.setOn(produto.cartao, animated: false)
+            btnSalvar.setTitle("Atualizar", for: .normal)
+            if let image = produto.image as? UIImage{
+                imgProduto.image = image
+            }
+        }
 
         // Do any additional setup after loading the view.
+    }
+    
+    @IBAction func addUpdateProduto(_ sender: UIButton){
+        if produto == nil{
+            produto = Produtos(context: context)
+        }
+        produto.nome = nomeProduto.text! //Validar informacao
+        produto.valor = Double(valorProduto.text!)! //Validar informacao
+        produto.cartao = swCartao.isOn
+        if smallImage != nil{
+            produto.image = smallImage
+        }
+        do{
+            try context.save()
+        }catch{
+            print(error.localizedDescription)
+        }
     }
 
     override func didReceiveMemoryWarning() {
